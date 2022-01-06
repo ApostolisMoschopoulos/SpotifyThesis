@@ -1,0 +1,297 @@
+%& -shell-escape
+\documentclass[]{article}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{enumerate}
+\usepackage{hyperref}
+\usepackage[margin=1.0in]{geometry}
+\usepackage[dvipsnames]{xcolor}
+
+%opening
+\title{Explanation of the code}
+\author{Moschopoulos Apostolos}
+\date{1st of December 2021}
+
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+\includegraphics[scale=0.9]{spotify_MPD.png}
+\end{abstract}
+
+\section{Representing the information}
+The dataset has been given in 1000 JSON files. Each file contains 1000 playlists
+and some meta information. In this first section we will meticulously explain step-by-step how the information was extracted from the initial given files and represented using python and pandas utilities.\\
+\\
+\subsection{Importing the data}
+%\inputpygments{python}{cell_1.py}
+%\begin{mdframed}
+%	\begin{pyblock}
+%		import JSON
+%		import numpy as np
+%		import pandas as pd
+%	\end{pyblock}
+%\end{mdframed}
+\includegraphics[scale=0.8]{cell1.png}
+%begin{verbatim}
+\\
+In those lines of code numpy, pandas and the json module are imported. Pandas is a very powerful tool for data analysis so we will store our data into a pandas dataframe.\\
+\noindent
+{\color{Blue} \rule{\linewidth}{0.5mm}}
+\\
+\includegraphics[scale=0.8]{cell2.png}
+
+
+In the second cell, we are defining a function that creates a file path, then reaches a particular JSON file, reads it's input and stores them into a pandas data frame. 
+\\
+\noindent
+{\color{Blue} \rule{\linewidth}{0.5mm}}
+\\
+\includegraphics[scale=0.8]{cell3.png}
+
+
+This loop calls the above determined function and creates the complete data frame, utilizing a pandas method called 'concat' (\href{https://pandas.pydata.org/docs/reference/api/pandas.concat.html}{pandas.concat}). \textbf{\underline{PLEASE NOTE}:} Due to the lack
+of resources, a mere chunk of the whole dataset Spotify is providing us was used. That loop is designed to reach 10 JSON files
+hence only 10 thousand out of the one million playlists were used. This leads to inevitable drop in success rate metrics, not only because the model has too few instances (playlists) to learn from, but also from the fact that the number of individual tracks the model is going to use in order to complete the playlists from challenge set is going to be \textit{by far} shorter than the real one, which simply means the model doesn't even \textbf{know a big percentage of tracks that exist} so it can't possibly include them in the complete playlists. 
+\\
+\noindent
+{\color{Blue} \rule{\linewidth}{0.5mm}}
+\includegraphics[scale=0.8]{cell4.png}
+
+In this cell we put the challenge set, a.k.a the incomplete playlists that need to be filled, into the program. The final line is again concatenating the training and test datasets into a single pandas data frame. Yes, that is required because as soon as we create the sparse matrix (more info about this in section 1.3), we need the challenge set information in order to depict the correlation between tracks and playlists. 
+\\
+\noindent
+{\color{Blue} \rule{\linewidth}{0.5mm}}
+We now have established the dataset we will be working with, and no additional info shall be imported. Before we start to work and analyse it we will show it in the initial raw form. The dataframe consists of 1000 rows -each row contains information for one playlist- and 12 columns. Let's look at what each column is offering us:
+\begin{description}
+	\item [$\bullet$ name] string - the name of the playlist
+	\item [$\bullet$ collaborative] boolean - if true, the playlist is a collaborative playlist. Multiple users may contribute tracks to a collaborative playlist.
+	\item [$\bullet$ pid] integer - playlist id - the MPD ID of this playlist. This is an integer between 0 and 999,999. \textbf{\underline{NOTE THAT}} the pid will only be between 0 and 9,999 in this data frame due to the smaller amount of input.   
+	\item [$\bullet$ modified\_at] seconds - timestamp (in seconds since the epoch) when this playlist was last updated. Times are rounded to midnight GMT of the date when the playlist was last updated.
+	\item[$\bullet$ num\_tracks] the number of tracks in the playlist
+	\item[$\bullet$ num\_albumns] the number of unique albums for the tracks in the playlist
+	\item[$\bullet$ num\_followers] the number of followers this playlist had at the time the MPD was created. (Note that the follower count does not including the playlist creator)
+	\item[$\bullet$ tracks] an array of information about each track in the playlist. Each element in the array is a dictionary with the some fields we will later talk about
+	%* ***track_name*** - the name of the track
+	%* ***track_uri*** - the Spotify URI of the track
+	%* ***album_name*** - the name of the track's album
+	%* ***album_uri*** - the Spotify URI of the album
+	%* ***artist_name*** - the name of the track's primary artist
+	%* ***artist_uri*** - the Spotify URI of track's primary artist
+	%* ***duration_ms*** - the duration of the track in milliseconds
+	%* ***pos*** - the position of the track in the playlist (zero-based)
+	\item[$\bullet$ num\_edits] the number of separate editing sessions. Tracks added in a two hour window are considered to be added in a single editing session.
+	\item[$\bullet$ duration\_ms] the total duration of all the tracks in the playlist (in milliseconds)
+	\item[$\bullet$ num\_artists] the total number of unique artists for the tracks in the playlist.
+	\item[$\bullet$ description] optional string - if present, the description given to the playlist.  Note that user-provided playlist descriptions are a relatively new feature of Spotify, so most playlists do not have descriptions.
+\end{description}
+You can acquire the information above from \textit{README.md} file.
+We are producing the shape and some rows of the data frame:
+
+\includegraphics[scale=1]{cell5.1.png} \\
+\includegraphics[scale=1]{cell5.2.png}
+\\
+Furthermore, we are also importing the challenge set that has a slightly different form. We use the method \href{https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.from_dict.html}{DataFrame.from\_dict} because the data stored in the JSON file are in the form of a nested dictionary. For clarity purposes we are presenting 2 spots from the challenge\_set JSON file:
+\\
+\includegraphics[scale=0.8]{challenge_json-1.png}
+\\
+\textbf{PLEASE NOTE} there are some empty playlists that need to be filled which means those ones need to be more specially treated.
+\\
+\includegraphics[scale=0.8]{challenge_json-2.png}
+\\
+The columns here are slightly different. Let's check what \textit{README.md} file has to say about the contents of those columns
+\begin{description}
+	\item [$\bullet$ name] (optional) - the name of the playlist. For some challenge playlists, the name will be missing.
+	\item [$\bullet$ num\_holdouts] the number of tracks that have been omitted from the playlist 
+	\item [$\bullet$ pid] the playlist ID 
+	\item [$\bullet$ num\_tracks] the total number of tracks in the playlist.
+	\item [$\bullet$ tracks] a (possibly empty) array of tracks that are in the playlist.
+	\item [$\bullet$ num\_samples] the number of tracks included in the playlist 
+\end{description}
+We are receiving them in the form below:
+
+\includegraphics[scale=0.75]{cell6&7.png}
+\\
+Even though playlists that don't include any song were dropped out of the dataset, there has been applied a natural language processing method called \href{https://monkeylearn.com/blog/what-is-tf-idf/}{tf-idf} with whom by analysing the empty playlists title, we can perform satisfactory predictions.
+\subsection{Understanding the form of the dataset}
+We have observed the dataset. With this current form, tracks are unreachable. We need to extract the information from \textit{'tracks'} column. This can be achieved easily, by using the \href{https://stackoverflow.com/questions/30510562/get-mapping-of-categorical-variables-in-pandas/30513726}{cat.codes} and appending methods . But first, let's organize the data frame a little to lessen confusion regarding the pid column. 
+\\
+\includegraphics[scale=0.8]{cell8.png}
+
+Now pid utility has been established.
+\\
+\noindent
+{\color{Blue} \rule{\linewidth}{0.5mm}}
+\includegraphics[scale=0.7]{cell9.png}
+\\
+In that cell we created a new data frame called 'song\_playlist\_df'. It's columns consist of the nested features of the column 'tracks'. \textbf{Note that} train\_test\_data is a concatenation of train and test\_df. 
+\\ 
+\noindent
+{\color{Blue} \rule{\linewidth}{0.5mm}}
+\includegraphics[scale=0.7]{cell10.png}
+\\
+We are almost finished with manipulating the shape and form of the data frame. All that's left is mapping the data frame as a \textit{sparse matrix}. In the next subsection we are going to explain mathematically what are we trying to perform.
+
+\subsection{The final form before the model creation}
+
+Until now we have assembled the code piece by piece while explaining what each cell is responsible for, but we haven't given a clear vision to the reader as to what we are trying to achieve - since it wasn't that necessary in order to understand the code. But now we start establishing more mathematically abstract structures hence it is clearly of utmost importance that the reader is able to follow the ideas behind the somewhat confusing implementation. Let us define some concepts. 
+
+In the concepts below we are going to be using the generalized terms 'user' and 'item'. We are clarifying here that \textbf{user refers to playlist} and \textbf{item refers to track}
+\begin{center}
+	\Large\textbf{\underline{2 basic techniques}}
+	
+	In recommendation systems academic literature, no matter which implementation one decides to choose, there are 2 main techniques available for usage; Collaborative and content-based filtering. Firstly let's explain the latter and why it will prove hard and unproductive to implement. Content-based filtering methods are based on a description of the item and a profile of the user's preferences.[\href{https://en.wikipedia.org/wiki/Recommender_system#:~:text=of%20hybrid%20systems.-,Content%2Dbased%20filtering,-%5Bedit%5D}{wikipedia}] These methods are best suited to situations where there is known data on an item (name, location, description, etc.), but not on the user. What does that mean in our situation? It means we need meta data about each track, some features, individual characteristics. Since we are not provided with any of the above-mentioned we are abandoning the idea of using a content-based technique.
+	
+	\textbf{\underline{Collaborative filtering}}
+	
+	Collaborative filtering is based on the assumption that people who agreed in the past will agree in the future, and that they will like similar kinds of items as they liked in the past. The system generates recommendations using only information about rating profiles for different users or items. By locating peer users/items with a rating history similar to the current user or item, they generate recommendations using this neighborhood.[\href{https://en.wikipedia.org/wiki/Recommender_system#:~:text=Approaches%5Bedit%5D-,Collaborative%20filtering,-%5Bedit%5D}{wikipedia}]. What does that mean? It means that if a playlist A has 50 tracks and playlist B has 30 tracks and they have say 25 tracks in common, there is a high chance we can take the tracks from playlist A (while respecting the order!!!) and present them as a prediction for playlist B. 
+	\textbf{\underline{Utility Matrices}}
+	
+	We have seen above that in a recommendation system application there are two classes of entities, users and items. Users have preferences for certain items, and these preferences must be teased out of the data. The data itself is represented as a utility matrix, giving for each user-item pair, a value that represents what is known about the degree of preference of that user for that item. In our case we will count as preference the occasion where a track belongs to a playlist. Think of a 2d array with each row to be a playlist and each column a track
+	and take the (i,j)th element to be 1 when the jth track belongs to the ith playlist. Given this chance, we are going to depict the logic behind the whole structure we are going to use in order to predict tracks to playlists.
+	Let's say we have been given the dataset
+	\\
+	\begin{equation}
+		M = 
+		\left(\begin{array}{ccccc} 1 & 0 & 0 & 1 & 0\\ 0 & 1 & 0 & 1 & 0 \\ 1 & 1 & 0 & 0 & 1 \end{array}\right)
+	\end{equation}
+	\\
+	Above we have 3 playlists (P1, P2, P3) and 5 tracks (T1, T2, T3, T4, T5). Also we have
+	\begin{equation}
+		P1 \in (\begin{array}{cc}T1 & T4 \end{array}), 
+		P2 \in (\begin{array}{cc}T2 & T4 \end{array}), 
+		P3 \in (\begin{array}{ccc}T1 & T2 & T5 \end{array})
+	\end{equation}
+	and we also know, that in \textit{some} playlists \textit{some} tracks have been removed. We have been asked to fill the playlists with the tracks we actually believe that are included into them.
+	As soon as the information is depicted into a utility matrix, we can start making suggestions using collaborative filtering methodology; We can say for example that P1 might also include T2 because both playlists have T4 included so \textit{'they are similar'}. We can also do the same for P2 and T1. Afterwards we can fill both P1 and P2 with T5 and P3 with T4 on the grounds that \textit{all three playlists started looking similar}.
+	That simple and arguably naive example is designed to give you an idea about how CNF (Collaborative Neural Filtering) works.
+	
+	\Large\textbf{Matrix factorization - its use on prediction}
+	
+	After composing the utility matrix, we can divide them into 2 separate ones(typically called user and item matrices). Now those new sub matrices are created with the idea that when you multiply them (remember, order MATTERS!) you get the original matrix. The initial utility matrix must be factorized in a way that the loss between it and the recreated one is minimized using \href{https://www.statisticshowto.com/probability-and-statistics/statistics-definitions/mean-squared-error/#:~:text=mean%20squared%20error%20(MSE)}{\textbf{MSE}}.
+	Figure below explains the idea:
+	
+	\includegraphics[scale=0.6]{mat_fac.png}
+	\\
+	\noindent
+	{\color{Blue} \rule{\linewidth}{0.5mm}}
+	
+	You may notice non zero values in previous cells that were tagged zero; the higher the value on an unobserved entry, the higher the chance the corresponding user will interact with the corresponding item! That is acquisition of new information and happens on the prediction process(where the 2 matrices try to recreate the original one). The idea behind this implementation is that each user and item is projected onto a latent space. We will explain more in detail later what a latent space is, but for now you can think of it as a way to represent compressed data. We can now measure the similarity between each latent vector by computing dot product or cosine similarity between them. In prediction we compute each of the user and item latent vector. Hence we will have: 
+
+	$\left(\begin{array}{cc} 0 & 1.3\\\end{array}\right)  X  \left(\begin{array}{c} 0 \\ 0.5 \end{array}\right),$
+	$\left(\begin{array}{cc} 0 & 1.3\\\end{array}\right)  X  \left(\begin{array}{c} 0 \\ 0 \end{array}\right),$
+	\\ 
+	$\left(\begin{array}{cc} 0 & 1.3\\\end{array}\right)  X  \left(\begin{array}{c} -0.8 \\ 0 \end{array}\right),$
+	$\left(\begin{array}{cc} 0 & 1.3\\\end{array}\right)  X  \left(\begin{array}{c} 0 \\ 0.8 \end{array}\right),$
+	$\left(\begin{array}{cc} 0 & 1.3\\\end{array}\right)  X  \left(\begin{array}{c} -0.6 \\ 0 \end{array}\right),$
+	
+	for the first row of the new utility matrix. And mathematically this is what happens during prediction:
+	
+	\includegraphics[scale=0.8]{dot_product.png}
+	\\
+	\noindent
+	{\color{Blue} \rule{\linewidth}{0.5mm}}
+	The prediction of each user/item entry is merely the dot product of their latent vectors.
+	Now we will discuss the reason why the above technique is not sufficient and how we can generalize it.
+	
+	\Large\textbf{Generalizing matrix factorization}
+	
+	The inner product does not accurately predict the users/items relationships as it can be seen \href{https://liqiangnie.github.io/paper/p173-he.pdf}{here}. Thus we need a non linear approach to cover for the high complexity of the problem. One approach is to use a large number of latent factors, but it is easily dismissed because it can potentially damage the model generalization, leading to overfitting. The final solution is to create a deep neural network (dnn) to learn the user/items interactions. The key is to ensemble a model that utilises both the strength of MF linearity and the dnn non-linearity for modelling the user/item latent structures. In order for that to succeed, we first use one-hot-encoding of user/item of the input.
+	
+	\includegraphics[scale=1.1]{one-hot.png}
+	\\
+	Because of how neural networks work, the data is depicted in high dimensions. We will explain in the NeuMF section more details about how lowering the dimensions work, but for now keep in mind that Matrix factorization is used on the final stages of the model, using as inputs vectors that are already processed by the dnn. \textbf{Please note} that GMF and MLP are not fused by sharing the same layer as input and their outputs are NOT combined together. If you are interested in this type of architecture you can check \href{http://deeplearn-ai.com/2017/11/21/neural-tensor-network-exploring-relations-among-text-entities/}{Neural Tensor Networks}(NTNs). The architecture above cannot be implemented here because: \begin{enumerate}
+		\item It implies that both GMF and DNN use the same size of the lowered dimensions.
+		\item It lowers flexibility
+	\end{enumerate}
+	Hence we allow both GMF and MLP (the name of dnn) to learn separately how to lower the dimensions (i.e have their own embeddings) and then combine the 2 models by concatenating their last layer. This is a full image of the architecture:
+	
+	\includegraphics[scale=1.1]{comple_architecture.png}
+	\\
+	Observe that both models work simultaneously and independently from each other.
+\end{center}
+
+\section{Creating the model}
+\subsection{NeuMF}
+The model is a neural network. In this paper we are assuming the reader is familiar to how a neural network works, for, we will not explain terminology such as 'epochs' or 'back-propagation'. We are though, going to describe layer by layer what the network is performing -to the extend possible (do not forget deep learning is infamous for it's low interpretability).
+NeuMF is designed to be a connection of GMF and MLP. In the input layer we have the user's and item's multidimensional tensors. We are passing them into the embedding layer which performs a dimensionality reduction, in practice, an abstraction whose purpose is for the model to find some patterns that will help the learning process.An embedding is a relatively low-dimensional space into which you can translate high-dimensional vectors.
+
+\includegraphics[scale=1.2]{embed.png}
+\\
+ Embeddings make it easier to do machine learning on large inputs like sparse vectors representing words. Ideally, an embedding captures some of the semantics of the input by placing semantically similar inputs close together in the embedding space. An embedding can be learned and reused across models. [\href{https://developers.google.com/machine-learning/crash-course/embeddings/video-lecture}{\textbf{Embeddings by google}}] We create both MF and MLP embedding layers.
+
+Next we are Flattening the embeddings into the MF and MLP latent vectors. Flattening is converting the data into a 1-dimensional array for inputting it to the next layer. Latent vectors are a bunch of latent- inaccessible variables.
+That latent data is 'hidden' from us, that is, we don't know in which way the network will map the data to lower dimensions and what these lower dimensions will mean. We trust the network has trained itself for performing the best configuration.
+
+It's time we add the 5 Dense layers. Until now we were constructing -and perfecting- the correct input form. Now it is time to set those parameters (weights) that are going to understand that, say, playlist no 3400 has the same 50 out of it's 60 tracks with playlists no 5600 50 out of 55 tracks. Note that we only use the MLP latent vector which is a concatenation of MLP user and item vectors respectfully. The activation function is \href{https://towardsdatascience.com/activation-functions-neural-networks-1cbd9f8d91d6#:~:text=ReLU%20(Rectified%20Linear%20Unit)%20Activation%20Function}{\textbf{ReLU}}. 
+
+We talked earlier that this model is a connection of performing Generalized Matrix factorization and the Multilayer Perceptron. The connection arrives in this layer, the predict layer where a concatenation of mf latent and mlp vector (that has been through the exhausting Dense layers). 
+
+As it is common in classification problems models, we add the final layer to be a single neuron with the sigmoid as an activation function. That decision is supported by the use of binary cross-entropy(i.e the difference 2 probability distributions) as a loss function.
+
+Below we present the code we just explained:
+\\
+\noindent
+{\color{Blue} \rule{\linewidth}{0.5mm}}
+\includegraphics[scale=1]{full_model.png}
+
+And below is demonstrated the code needed to train the model, unluckily we could not use our GPU's to accelerate the whole process at that time. \textbf{get\_train\_samples} is a generative function, used to produce negative training examples(invalid user-item pairs). \textbf{HYPERPARAMETERS USED:} \begin{description}
+	\item [$\bullet$ loaded] True - the data are already loaded and ready for insertion
+	\item [$\bullet$ verbose] 1 - while validating we want the bar visualizing us the procedure with respect to time
+	\item [$\bullet$ epochs] 7 - one cycle through the full training dataset, bibliography suggests ideal is 11
+	\item [$\bullet$ batch\_size] 256 -we are filling the network with chunks of data since the whole sparse matrix is of enormous size
+	\item [$\bullet$ latent\_dim] 32 - Latent dimensions/latent variables are variables which we do not directly observe, but we assume to exist and save, or instruct the merged features from matrix factorization 
+	\item [$\bullet$ dense\_layers] [256, 128, 128, 64]- previously we mentioned we create 5 dense layers, each has their own number of neurons.
+	\item [$\bullet$ learning\_rate] 0.001 - a classic one
+\end{description}
+
+\noindent
+{\color{Blue} \rule{\linewidth}{0.5mm}}
+\includegraphics[scale=0.8]{get_model.png}
+\noindent
+{\color{Blue} \rule{\linewidth}{0.5mm}}
+\\
+\includegraphics[scale=0.9]{running.png}
+\subsection{Clustering}
+The model is ready! Does that mean we initiate the predictions on 9 thousand playlists? The answer is not yet. Now the importance and utility of embedding vectors can shine. Remember the function of the embedding layer? We are exploiting that in order to perform clustering. Clustering in machine learning is the process of finding items with similar features (that are explored in embeddings layers) and grouping them together. In our case after clustering the playlists we will call two playlists that belong in the same cluster as 'neighbours'. 
+\\
+\includegraphics[scale=0.9]{cell11.png}
+\noindent
+{\color{blue} \rule{\linewidth}{0.4mm}}
+\\
+
+\section{Applying the Model}
+This is the final part. Here we use the trained model in order to generate results for the missing playlists. Before we look at the code though, let's review some rules of the competition. 1.For each playlist we must have exactly 500 tracks generated. 2.There should be no duplicates( all of the tracks must be unique). There are 2 instances where the 1st condition may not be correct; if the model predicts more or fewer than 500 tracks. The first case is can be easily handled by sorting( which we are going to apply anyway) and keeping the first 500 tracks. But in order to tackle the case where the model predicts say 400 tracks, can we perform something better than randomly adding 100 tracks that don't belong to the playlist? The answer is yes, we are going to fill the playlist with the most popular tracks because statistically there are higher chances those will be contained on the playlist. Following that idea we are writing the code below:
+\\
+\includegraphics[scale=0.8]{cell12.png}
+\noindent
+\\
+
+Now, the whole process of creating the final list, ready for export into a csv file -which may be overwhelming- will be presented
+below, and following it, we are going to explain each part of the code individually.
+\\
+\includegraphics[scale=1.2]{image_part_001.png}
+
+\includegraphics[scale=1.1]{image_part_002.png}
+
+\includegraphics[scale=1.2]{image_part_003.png}
+
+Let's begin the explanation. Variables iter\_counter and times\_milestone\_reached are used for feedback about the percentage of predictions that is completed. Hence we see 30\% completed for example.
+
+\textit{The \textcolor{Green}{for} loop.} In this instance we are going to predict just a chunk of playlists. The variable desired\_user\_id is the current playlist we are working on. We are getting the specific user's vector from the whole latent matrix and we are reshaping it in order to fit it correctly into the model. Then we are performing kmeans in order to find the neighbours of that user(users that have same latent vectors which means same characteristics). \textit{Reminder: } Users reference playlists - items tracks.
+Next, after having found the neighbours, we are delving into the tracks. For the neighbours of the desired user we are extracting the neighbour tracks. But how is a neighbour track defined? This is occurring inside the for loop.
+Afterwards we are creating \textit{users} and \textit{items}. User is a numpy array filled using the \href{https://numpy.org/doc/stable/reference/generated/numpy.full.html}{\textcolor{Blue}{full}} method. What's happening is that users is a numpy array of size of the length of tracks(which are the neighbouring tracks of the particular playlist) and every position is filled in with the playlist id we are currently filling. items is another numpy array containing neighbouring tracks. We are feeding them into the model for prediction. This ranks the "neighboring" tracks by how likely they are (or how the model believes) to occur next in the given test playlist.
+We are converting them into a pandas dataframe and get the probability of being in the playlist ()according to the model), the track index and the track id through looping into the results.
+Following the 2$^{nd}$ rule, we are removing the duplicates or tracks that already existed in the playlist. temp holds the playlists that were already in the playlist. Then following the 1$^{st}$ rule, we are only keeping the first 500 tracks. But remember there is another instance where the 1$^{st}$ rule may be violated. What may happen if there are less than 500 tracks? As described above, we are filling the remaining tracks with the most popular ones(while keeping an eye for duplicates again with the variable \textit{songs\_that\_exist\_in\_playlist}). Last but not least, we are putting the information in a list, along with the playlist in demand.
+
+\section{Preparation for submission}
+This is it! We have the predictions ready. It was an enjoyable (and a long -took nine and a half hours just for this chunk of playlists-) journey. Now all that's left is to write them into a csv file following the competition's protocol. And of course, \href{https://www.aicrowd.com/9f000fa0-61d6-438f-9df7-62a205a3ef6c}{submitting} them!
+\\
+\includegraphics[scale=1.1]{final.png}
+
+\includegraphics[scale=0.8]{first_sub.png}
+
+\includegraphics[scale=0.7]{first_sub_detes.png}
+\end{document}
