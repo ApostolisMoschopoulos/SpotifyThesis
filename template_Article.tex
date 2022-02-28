@@ -211,7 +211,17 @@ In the concepts below we are going to be using the generalized terms 'user' and 
 	\includegraphics[scale=1.1]{comple_architecture.png}
 	\\
 	Observe that both models work simultaneously and independently from each other.
+	
+	\Large\textbf{Use of matrix factorization for dimensionality reduction}
+	
+	It must be clear until now, that matrix factorization is a rigorous tool, that can be exploited into the analysis and 'segmentation' of sparse user-item matrices. Now we will demonstrate its capability for dimensionality reduction.
+	
+	\includegraphics[scale=0.8]{MF_dimensionality_red_example.png} 
+	\\
+	
+	Let's speculate using the figure above. In this example, there are 7 tracks and 16 playlists. We are about to perform matrix factorization with the \textit{hyperparameter called latent dimensions} = 3. The utility matrix (purple colour) demonstrates the user-item relationships (which playlist contains which track). On the left, the blue and red matrices are the user and item embedding matrices, and multiplying them together we get a matrix really close to the initial user-item matrix. Due to the fact that, each one of these 2 smaller matrices (embeddings), contain information only for users (blue) and items(red), the matrices themselves can be interpreted as a lower level representation of the initial information. Hence, in the blue matrix, we can use for each playlist(same number of rows) only 3 columns instead of 7 and still acquire the same -\textit{almost} the same- amount of information with the initial purple matrix! The same logic applies to the track embedding matrix; for each track (7 in total) we are using 3 rows instead of 16 to represent the same information. It may sound ambiguous and you may be questioning whether to deal with 2 matrices is simpler than one, but consider how much we gain by reducing a 1,000,000*128,000(unique tracks) matrix to embeddings with 26 rows/columns respectively! 
 \end{center}
+
 
 \section{Creating the model}
 \subsection{NeuMF}
