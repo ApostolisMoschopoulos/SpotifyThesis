@@ -247,7 +247,11 @@ Below we present the code we just explained:
 {\color{Blue} \rule{\linewidth}{0.5mm}}
 \includegraphics[scale=1]{full_model.png}
 
-And below is demonstrated the code needed to train the model, unluckily we could not use our GPU's to accelerate the whole process at that time. \textbf{get\_train\_samples} is a generative function, used to produce negative training examples(invalid user-item pairs). \textbf{HYPERPARAMETERS USED:} \begin{description}
+\subsubsection{Negative Sampling}
+Before we demonstrate the code needed to train the model, we will establish another technique called \textit{negative sampling}. In our model, we are applying negative sampling throught the  \textbf{get\_train\_samples} function, which is a generative function used to produce negative training examples (invalid user-item pairs).
+
+\subsubsection{Hyperparameters}
+Below, we demonstrate the code needed to train the model. Please note that we could not use our GPU's to accelerate the whole process at that time. \textbf{HYPERPARAMETERS USED:} \begin{description}\textbf{HYPERPARAMETERS USED:} \begin{description}
 	\item [$\bullet$ loaded] True - the data are already loaded and ready for insertion
 	\item [$\bullet$ verbose] 1 - while validating we want the bar visualizing us the procedure with respect to time
 	\item [$\bullet$ epochs] 7 - one cycle through the full training dataset, bibliography suggests ideal is 11
