@@ -230,7 +230,7 @@ NeuMF is designed to be a connection of GMF and MLP. In the input layer we have 
 
 \includegraphics[scale=1.2]{embed.png}
 \\
- Embeddings make it easier to do machine learning on large inputs like sparse vectors representing words. Ideally, an embedding captures some of the semantics of the input by placing semantically similar inputs close together in the embedding space. An embedding can be learned and reused across models. [\href{https://developers.google.com/machine-learning/crash-course/embeddings/video-lecture}{\textbf{Embeddings by google}}] We create both MF and MLP embedding layers.
+ Embeddings make it possible to do machine learning on large inputs like sparse vectors representing words. Ideally, an embedding captures some of the semantics of the input by placing semantically similar inputs close together in the embedding space. An embedding can be learned and reused across models. [\href{https://developers.google.com/machine-learning/crash-course/embeddings/video-lecture}{\textbf{Embeddings by google}}] We create both MF and MLP embedding layers.
 
 Next we are Flattening the embeddings into the MF and MLP latent vectors. Flattening is converting the data into a 1-dimensional array for inputting it to the next layer. Latent vectors are a bunch of latent- inaccessible variables.
 That latent data is 'hidden' from us, that is, we don't know in which way the network will map the data to lower dimensions and what these lower dimensions will mean. We trust the network has trained itself for performing the best configuration.
