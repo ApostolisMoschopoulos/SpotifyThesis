@@ -4,6 +4,7 @@
 \usepackage{amsmath}
 \usepackage{enumerate}
 \usepackage{hyperref}
+\usepackage{biblatex}
 \usepackage[margin=1.0in]{geometry}
 \usepackage[dvipsnames]{xcolor}
 
@@ -228,11 +229,10 @@ In the concepts below we are going to be using the generalized terms 'user' and 
 	Let's speculate using the figure above. In this example, there are 7 tracks and 16 playlists. We are about to perform matrix factorization with the \textit{hyperparameter called latent dimensions} = 3. The utility matrix (purple colour) demonstrates the user-item relationships (which playlist contains which track). On the left, the blue and red matrices are the user and item embedding matrices, and multiplying them together we get a matrix really close to the initial user-item matrix. Due to the fact that, each one of these 2 smaller matrices (embeddings), contain information only for users (blue) and items(red), the matrices themselves can be interpreted as a lower level representation of the initial information. Hence, in the blue matrix, we can use for each playlist(same number of rows) only 3 columns instead of 7 and still acquire the same -\textit{almost} the same- amount of information with the initial purple matrix! The same logic applies to the track embedding matrix; for each track (7 in total) we are using 3 rows instead of 16 to represent the same information. It may sound ambiguous and you may be questioning whether to deal with 2 matrices is simpler than one, but consider how much we gain by reducing a 1,000,000*128,000(unique tracks) matrix to embeddings with 26 rows/columns respectively! 
 \end{center}
 
-
 \section{Creating the model}
 \subsection{NeuMF}
 The model is a neural network. In this paper we are assuming the reader is familiar to how a neural network works, for, we will not explain terminology such as 'epochs' or 'back-propagation'. We are though, going to describe layer by layer what the network is performing -to the extend possible (do not forget deep learning is infamous for it's low interpretability).
-NeuMF is designed to be a connection of GMF and MLP. In the input layer we have the user's and item's multidimensional tensors. We are passing them into the embedding layer which performs a dimensionality reduction, in practice, an abstraction whose purpose is for the model to find some patterns that will help the learning process.An embedding is a relatively low-dimensional space into which you can translate high-dimensional vectors.
+NeuMF is designed to be a connection of GMF and MLP. In the input layer we have the user's and item's multidimensional tensors. We are passing them into the embedding layer which performs a dimensionality reduction-using matrix factorization as explained above- in practice, an abstraction whose purpose is for the model ``to find some patterns that will help the learning process``!!change the sentence inside ``!!. An embedding is a relatively low-dimensional space into which you can translate high-dimensional vectors.
 
 \includegraphics[scale=1.2]{embed.png}
 \\
@@ -254,10 +254,10 @@ Below we present the code we just explained:
 \includegraphics[scale=1]{full_model.png}
 
 \subsubsection{Negative Sampling}
-Before we demonstrate the code needed to train the model, we will establish another technique called \textit{negative sampling}. In our model, we are applying negative sampling throught the  \textbf{get\_train\_samples} function, which is a generative function used to produce negative training examples (invalid user-item pairs).
+Before we demonstrate the code needed to train the model, we will establish another technique called \textit{negative sampling}. In our model, we are applying negative sampling throught the  \textbf{get\_train\_samples} function, which is a generative function used to produce negative training examples (invalid user-item pairs). Negative sampling is very popular amongst Word2Vec (an NLP method) models \cite{Rossi}
 
 \subsubsection{Hyperparameters}
-Below, we demonstrate the code needed to train the model. Please note that we could not use our GPU's to accelerate the whole process at that time. \textbf{HYPERPARAMETERS USED:} \begin{description}\textbf{HYPERPARAMETERS USED:} \begin{description}
+Below, we demonstrate the code needed to train the model. Please note that we could not use our GPU's to accelerate the whole process at that time. \textbf{HYPERPARAMETERS USED:} \begin{description}
 	\item [$\bullet$ loaded] True - the data are already loaded and ready for insertion
 	\item [$\bullet$ verbose] 1 - while validating we want the bar visualizing us the procedure with respect to time
 	\item [$\bullet$ epochs] 7 - one cycle through the full training dataset, bibliography suggests ideal is 11
@@ -314,4 +314,11 @@ This is it! We have the predictions ready. It was an enjoyable (and a long -took
 \includegraphics[scale=0.8]{first_sub.png}
 
 \includegraphics[scale=0.7]{first_sub_detes.png}
+
+\section[papers used for research]{Bibliography}
+Below are presented the sources used in order for the work to be accomplished.
+\begin{thebibliography}{100}
+	
+	\bibitem{Rossi} Chamberlain, Benjamin P. and Rossi, Emanuele and Shiebler, Dan and Sedhain, Suvash and Bronstein, Michael M., "Tuning Word2vec for Large Scale Recommendation Systems," \emph{Fourteenth ACM Conference on Recommender Systems}, pp. 732-737, 22 September 2020  
+\end{thebibliography}
 \end{document}
