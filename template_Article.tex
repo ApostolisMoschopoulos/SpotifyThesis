@@ -149,11 +149,14 @@ In the concepts below we are going to be using the generalized terms 'user' and 
 \begin{center}
 	\Large\textbf{\underline{2 basic techniques}}
 	
-	In recommendation systems academic literature, no matter which implementation one decides to choose, there are 2 main techniques available for usage; Collaborative and content-based filtering. Firstly let's explain the latter and why it will prove hard and unproductive to implement. Content-based filtering methods are based on a description of the item and a profile of the user's preferences.[\href{https://en.wikipedia.org/wiki/Recommender_system#:~:text=of%20hybrid%20systems.-,Content%2Dbased%20filtering,-%5Bedit%5D}{wikipedia}] These methods are best suited to situations where there is known data on an item (name, location, description, etc.), but not on the user. What does that mean in our situation? It means we need meta data about each track, some features, individual characteristics. Since we are not provided with any of the above-mentioned we are abandoning the idea of using a content-based technique.
+	In recommendation systems academic literature, no matter which implementation one decides to choose, there are 2 main techniques (and their combinations) available for usage; Collaborative and content-based filtering. Firstly let's explain the latter and why it will prove hard and unproductive to implement. Content-based filtering methods are based on a description of the item and a profile of the user's preferences. The basic process performed by a content-based recommender consists in matching up the attributes of a user profile in which preferences
+	and interests are stored, with the attributes of a content object (item), in order to
+	recommend to the user new interesting items. \cite{2} These methods are best suited to situations where there is known data on an item (name, location, description, etc.), but not on the user. What does that mean in our situation? It means we need meta data about each track, some features, individual characteristics. Since we are not provided with any of the above-mentioned we are abandoning the idea of using a content-based technique.
 	
 	\textbf{\underline{Collaborative filtering}}
 	
-	Collaborative filtering is based on the assumption that people who agreed in the past will agree in the future, and that they will like similar kinds of items as they liked in the past. The system generates recommendations using only information about rating profiles for different users or items. By locating peer users/items with a rating history similar to the current user or item, they generate recommendations using this neighborhood.[\href{https://en.wikipedia.org/wiki/Recommender_system#:~:text=Approaches%5Bedit%5D-,Collaborative%20filtering,-%5Bedit%5D}{wikipedia}]. What does that mean? It means that if a playlist A has 50 tracks and playlist B has 30 tracks and they have say 25 tracks in common, there is a high chance we can take the tracks from playlist A (while respecting the order!!!) and present them as a prediction for playlist B. 
+	Collaborative filtering is based on the assumption that people who agreed in the past will agree in the future, and that they will like similar kinds of items as they liked in the past. The system generates recommendations using only information about rating profiles for different users or items. By locating peer users/items with a rating history similar to the current user or item, they generate recommendations using this neighborhood. What does that mean? It means that items the target user has not yet considered but will likely enjoy, are recommended. \cite{3}
+	considered but will likely enjoy 
 	\textbf{\underline{Utility Matrices}}
 	
 	We have seen above that in a recommendation system application there are two classes of entities, users and items. Users have preferences for certain items, and these preferences must be teased out of the data. The data itself is represented as a utility matrix, giving for each user-item pair, a value that represents what is known about the degree of preference of that user for that item. In our case we will count as preference the occasion where a track belongs to a playlist. Think of a 2d array with each row to be a playlist and each column a track
@@ -254,7 +257,7 @@ Below we present the code we just explained:
 \includegraphics[scale=1]{full_model.png}
 
 \subsubsection{Negative Sampling}
-Before we demonstrate the code needed to train the model, we will establish another technique called \textit{negative sampling}. In our model, we are applying negative sampling throught the  \textbf{get\_train\_samples} function, which is a generative function used to produce negative training examples (invalid user-item pairs). Negative sampling is very popular amongst Word2Vec (an NLP method) models \cite{Rossi}
+Before we demonstrate the code needed to train the model, we will establish another technique called \textit{negative sampling}. In our model, we are applying negative sampling throught the  \textbf{get\_train\_samples} function, which is a generative function used to produce negative training examples (invalid user-item pairs). Negative sampling is very popular amongst Word2Vec (an NLP method) models \cite{1}
 
 \subsubsection{Hyperparameters}
 Below, we demonstrate the code needed to train the model. Please note that we could not use our GPU's to accelerate the whole process at that time. \textbf{HYPERPARAMETERS USED:} \begin{description}
@@ -319,6 +322,10 @@ This is it! We have the predictions ready. It was an enjoyable (and a long -took
 Below are presented the sources used in order for the work to be accomplished.
 \begin{thebibliography}{100}
 	
-	\bibitem{Rossi} Chamberlain, Benjamin P. and Rossi, Emanuele and Shiebler, Dan and Sedhain, Suvash and Bronstein, Michael M., "Tuning Word2vec for Large Scale Recommendation Systems," \emph{Fourteenth ACM Conference on Recommender Systems}, pp. 732-737, 22 September 2020  
+	\bibitem{1} Chamberlain, Benjamin P. and Rossi, Emanuele and Shiebler, Dan and Sedhain, Suvash and Bronstein, Michael M., "Tuning Word2vec for Large Scale Recommendation Systems," \emph{Fourteenth ACM Conference on Recommender Systems}, pp. 732-737, 22 September 2020  
+	
+	\bibitem{2} Lops P., de Gemmis M., Semeraro G., (2011) "Content-based Recommender Systems: State of the Art and Trends," \emph{The adaptive web}, pp. 291 - 324
+	
+	\bibitem{3}  Mehdi Elahi, Francesco Ricci, Neil Rubens, "A survey of active learning in collaborative filtering recommender systems," \emph{Computer Science Review, Volume 20},  pp. 29-50, May 2016
 \end{thebibliography}
 \end{document}
